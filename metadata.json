@@ -1,0 +1,6 @@
+{
+  "name": "TrailMind AI",
+  "description": "AI-Powered Adventure Planning and Booking Platform for Maharashtra Tourism.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
