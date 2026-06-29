@@ -390,9 +390,20 @@ app.delete("/api/bookings/:id", (req, res) => {
   res.status(404).json({ error: "Booking not found." });
 });
 
+// Clean markdown code blocks from a JSON string and parse it safely
+function cleanAndParseJSON(text: string) {
+  let cleaned = text.trim();
+  if (cleaned.startsWith("```")) {
+    cleaned = cleaned.replace(/^```[a-zA-Z]*\n?/, "");
+    cleaned = cleaned.replace(/```$/, "");
+  }
+  cleaned = cleaned.trim();
+  return JSON.parse(cleaned);
+}
+
 // Helper to call Gemini with retry and fallback model
 async function generateWithFallback(ai: GoogleGenAI, contents: any, baseConfig: any) {
-  const models = ["gemini-3.5-flash", "gemini-3.1-flash-lite"];
+  const models = ["gemini-2.5-flash", "gemini-3.5-flash", "gemini-3.1-flash-lite"];
   let lastError = null;
 
   for (const model of models) {
@@ -529,7 +540,7 @@ app.post("/api/plan", async (req, res) => {
     });
 
     const outputText = response.text || "{}";
-    const data = JSON.parse(outputText.trim());
+    const data = cleanAndParseJSON(outputText);
     res.json(data);
   } catch (error: any) {
     console.error("Gemini API Error with all models:", error);

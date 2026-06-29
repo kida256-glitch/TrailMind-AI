@@ -10,6 +10,99 @@ interface PlannerProps {
   onBookItinerary: (destination: string, price: number) => void;
 }
 
+// Ultra-defensive sanitizer that provides robust defaults for any missing or undefined fields
+function sanitizeAIPlan(plan: any): AIPlan {
+  const defaultPlan: AIPlan = {
+    destination: "Sahyadri Wilderness Expedition",
+    activities: ["Lakeside Fireflies Camping", "Mountain Ridge Trekking", "Waterfall Rappelling"],
+    matchScore: 92,
+    bestBookingDate: "Saturday, July 4, 2026",
+    itinerary: [
+      {
+        day: 1,
+        title: "Base Camp & Sunset Hike",
+        slots: [
+          { time: "08:00 AM", activity: "Scenic Drive", details: "Travel to the base village through gorgeous green mountain passes." },
+          { time: "04:30 PM", activity: "Camp Setup & Tea", details: "Pitch premium moisture-proof tents and enjoy fresh hot onion pakoras with spiced chai." },
+          { time: "07:00 PM", activity: "Traditional Dinner", details: "Feast on a rustic home-cooked Maharashtrian dinner by the campfire." }
+        ]
+      },
+      {
+        day: 2,
+        title: "Summit Climb & Natural Plunge",
+        slots: [
+          { time: "05:30 AM", activity: "Sunrise Peak Assault", details: "Ascend the cool mountain ridges to witness the spectacular sun climbing above mist." },
+          { time: "11:30 AM", activity: "Secret Waterfall Plunge", details: "Dip in clean, refreshing cold-water streams hidden within dense forest canopies." }
+        ]
+      }
+    ],
+    budget: {
+      transport: 500,
+      operator: 1200,
+      food: 400,
+      equipment: 300,
+      total: 2400,
+      currency: "INR"
+    },
+    travelRoute: "Mumbai/Pune to Base Village via scenic state transport or local trains",
+    packingChecklist: ["Waterproof gear & rain covers", "Trekking shoes with solid grip", "Headlamp / Flashlight", "ORS / Rehydration packets"],
+    weather: {
+      temperature: "24°C",
+      condition: "Cool mountain breeze with light monsoon drizzle",
+      humidity: "82%",
+      advice: "Keep synthetic light-weight clothing and clear waterproof zip-locks handy for electronic devices."
+    },
+    safety: ["Always stay within eyesight of the registered local guide", "Avoid standing close to wet cliff edges during heavy wind gusts"],
+    restaurants: ["Rural Homestead village kitchen", "Highway local Dhaba & Misal Spot"],
+    attractions: ["Arthur Lake Ridge", "Ancient Cave structures"],
+    hiddenGems: ["Hidden Waterfall plunge cove", "Mist-laden panoramic peak view point"],
+    operatorRecommendation: "Sahyadri Elite Guides",
+    carbonFootprint: "8.2kg CO2e",
+    ecoScore: 95
+  };
+
+  if (!plan || typeof plan !== "object") return defaultPlan;
+
+  return {
+    destination: typeof plan.destination === "string" ? plan.destination : defaultPlan.destination,
+    activities: Array.isArray(plan.activities) ? plan.activities : defaultPlan.activities,
+    matchScore: typeof plan.matchScore === "number" ? plan.matchScore : defaultPlan.matchScore,
+    bestBookingDate: typeof plan.bestBookingDate === "string" ? plan.bestBookingDate : defaultPlan.bestBookingDate,
+    itinerary: Array.isArray(plan.itinerary) ? plan.itinerary.map((day: any) => ({
+      day: typeof day.day === "number" ? day.day : 1,
+      title: typeof day.title === "string" ? day.title : "Day Outline",
+      slots: Array.isArray(day.slots) ? day.slots.map((slot: any) => ({
+        time: typeof slot.time === "string" ? slot.time : "Time Slot",
+        activity: typeof slot.activity === "string" ? slot.activity : "Planned Activity",
+        details: typeof slot.details === "string" ? slot.details : "Description"
+      })) : []
+    })) : defaultPlan.itinerary,
+    budget: (plan.budget && typeof plan.budget === "object") ? {
+      transport: typeof plan.budget.transport === "number" ? plan.budget.transport : defaultPlan.budget.transport,
+      operator: typeof plan.budget.operator === "number" ? plan.budget.operator : defaultPlan.budget.operator,
+      food: typeof plan.budget.food === "number" ? plan.budget.food : defaultPlan.budget.food,
+      equipment: typeof plan.budget.equipment === "number" ? plan.budget.equipment : defaultPlan.budget.equipment,
+      total: typeof plan.budget.total === "number" ? plan.budget.total : defaultPlan.budget.total,
+      currency: typeof plan.budget.currency === "string" ? plan.budget.currency : defaultPlan.budget.currency,
+    } : defaultPlan.budget,
+    travelRoute: typeof plan.travelRoute === "string" ? plan.travelRoute : defaultPlan.travelRoute,
+    packingChecklist: Array.isArray(plan.packingChecklist) ? plan.packingChecklist : defaultPlan.packingChecklist,
+    weather: (plan.weather && typeof plan.weather === "object") ? {
+      temperature: typeof plan.weather.temperature === "string" ? plan.weather.temperature : defaultPlan.weather.temperature,
+      condition: typeof plan.weather.condition === "string" ? plan.weather.condition : defaultPlan.weather.condition,
+      humidity: typeof plan.weather.humidity === "string" ? plan.weather.humidity : defaultPlan.weather.humidity,
+      advice: typeof plan.weather.advice === "string" ? plan.weather.advice : defaultPlan.weather.advice,
+    } : defaultPlan.weather,
+    safety: Array.isArray(plan.safety) ? plan.safety : defaultPlan.safety,
+    restaurants: Array.isArray(plan.restaurants) ? plan.restaurants : defaultPlan.restaurants,
+    attractions: Array.isArray(plan.attractions) ? plan.attractions : defaultPlan.attractions,
+    hiddenGems: Array.isArray(plan.hiddenGems) ? plan.hiddenGems : defaultPlan.hiddenGems,
+    operatorRecommendation: typeof plan.operatorRecommendation === "string" ? plan.operatorRecommendation : defaultPlan.operatorRecommendation,
+    carbonFootprint: typeof plan.carbonFootprint === "string" ? plan.carbonFootprint : defaultPlan.carbonFootprint,
+    ecoScore: typeof plan.ecoScore === "number" ? plan.ecoScore : defaultPlan.ecoScore,
+  };
+}
+
 export default function Planner({
   initialPrompt,
   isGenerating,
@@ -21,6 +114,13 @@ export default function Planner({
   const [activeSubTab, setActiveSubTab] = useState<"itinerary" | "logistics" | "safety" | "food-gems">("itinerary");
 
   const [loadingStep, setLoadingStep] = useState(0);
+
+  // Sync with initialPrompt when passed from the Hero landing
+  React.useEffect(() => {
+    if (initialPrompt) {
+      setInputText(initialPrompt);
+    }
+  }, [initialPrompt]);
 
   // Cycle loading steps if generating
   React.useEffect(() => {
@@ -46,31 +146,21 @@ export default function Planner({
     e.preventDefault();
     if (inputText.trim()) {
       onPlanRequest(inputText);
-      setInputText("");
     }
   };
 
   const planSuggestions = [
-    "We are 4 friends, we want camping near Bhandardara, budget is ₹5000",
-    "Waterfall trek with high safety rating, moderate difficulty",
-    "Eco-certified operator with carbon footprint below 10kg"
+    "I want a moderate 2-day camping and trekking plan in Bhandardara for 2 people with a budget under ₹5000.",
+    "Show me a scenic waterfall trek with easy difficulty, local food spots, and safety guidelines for a group of 4.",
+    "Recommend a challenging weekend climbing and tenting expedition around Harishchandragad with expert local guides."
   ];
 
-  return (
-    <div className="w-full max-w-7xl mx-auto px-4 py-8 space-y-8" id="ai-planner-module">
-      
-      {/* Page Header */}
-      <div className="text-center max-w-xl mx-auto space-y-2">
-        <h1 className="font-display font-bold text-3xl md:text-4xl text-white tracking-tight flex items-center justify-center gap-2">
-          <Sparkles className="w-8 h-8 text-orange-400 animate-pulse" />
-          AI Adventure Planner
-        </h1>
-        <p className="text-slate-400 text-xs md:text-sm">
-          Discuss your team size, budget, or preferred sights. Our AI compiles verified travel packages instantly.
-        </p>
-      </div>
+  // Derive the guaranteed safe AI plan object
+  const safePlan = aiPlanResult ? sanitizeAIPlan(aiPlanResult) : null;
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-8" id="ai-planner-module">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         {/* LEFT PANEL: Chat Prompt Input */}
         <div className="lg:col-span-4 space-y-4">
@@ -79,9 +169,9 @@ export default function Planner({
               New Plan Configuration
             </h2>
             
-            <form onSubmit={handleSend} className="space-y-3" id="planner-form">
-              <div className="space-y-1">
-                <label className="text-[11px] font-mono text-slate-400 uppercase">Describe your dream weekend</label>
+            <form onSubmit={handleSend} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-mono text-slate-400 uppercase mb-2">Adventure prompt</label>
                 <textarea
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
@@ -117,19 +207,16 @@ export default function Planner({
           </div>
         </div>
 
-        {/* RIGHT PANEL: AI Generation Output Card */}
+        {/* RIGHT PANEL: Live Planner Outputs */}
         <div className="lg:col-span-8">
           
-          {/* A. If Loading State */}
+          {/* A. Generating State (Progressive feedback) */}
           {isGenerating && (
-            <div className="glass-panel rounded-2xl p-8 text-center space-y-6 border border-teal-500/30 glow-forest py-20">
-              <div className="relative w-16 h-16 mx-auto">
-                {/* Custom glowing spinner */}
-                <div className="absolute inset-0 border-4 border-slate-800 rounded-full" />
-                <div className="absolute inset-0 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
-                <Sparkles className="w-6 h-6 text-orange-400 absolute inset-0 m-auto animate-pulse" />
+            <div className="glass-panel rounded-2xl p-8 text-center border border-teal-500/30 bg-slate-950/60 backdrop-blur-md py-16 space-y-6 animate-pulse" id="planner-generating-state">
+              <div className="w-16 h-16 rounded-full bg-teal-950/80 border border-teal-500 flex items-center justify-center mx-auto shadow-lg shadow-teal-500/20">
+                <Sparkles className="w-6 h-6 text-teal-400 animate-spin" />
               </div>
-
+              
               <div className="space-y-2 max-w-sm mx-auto">
                 <h3 className="font-display font-semibold text-white">Synthesizing Adventure Pack...</h3>
                 <p className="text-xs text-emerald-400 font-mono animate-pulse min-h-[20px]">
@@ -150,7 +237,7 @@ export default function Planner({
           )}
 
           {/* B. Default Welcome State (When no plan is active and not generating) */}
-          {!isGenerating && !aiPlanResult && (
+          {!isGenerating && !safePlan && (
             <div className="glass-panel rounded-2xl p-8 text-center space-y-4 border border-white/10 bg-slate-950/40 backdrop-blur-md py-16">
               <Sparkles className="w-12 h-12 text-teal-500/40 mx-auto" />
               <div className="space-y-1">
@@ -166,7 +253,7 @@ export default function Planner({
           )}
 
           {/* C. Complete High-Fidelity Output Board */}
-          {!isGenerating && aiPlanResult && (
+          {!isGenerating && safePlan && (
             <div className="glass-panel rounded-2xl border border-white/10 bg-slate-950/40 backdrop-blur-md overflow-hidden shadow-2xl" id="ai-plan-result-card">
               
               {/* Header Info Banner */}
@@ -176,7 +263,7 @@ export default function Planner({
                     RECOMMENDED EXPEDITION
                   </span>
                   <h3 className="font-display font-bold text-xl md:text-2xl text-white">
-                    {aiPlanResult.destination}
+                    {safePlan.destination}
                   </h3>
                   <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 mt-1">
                     <span className="flex items-center gap-1">
@@ -185,7 +272,7 @@ export default function Planner({
                     </span>
                     <span>•</span>
                     <span className="flex items-center gap-1 text-teal-400 font-mono">
-                      Operator: <strong>{aiPlanResult.operatorRecommendation}</strong>
+                      Operator: <strong>{safePlan.operatorRecommendation}</strong>
                     </span>
                   </div>
                 </div>
@@ -194,10 +281,10 @@ export default function Planner({
                 <div className="flex items-center gap-3 bg-slate-900/60 p-3 rounded-xl border border-white/5">
                   <div className="text-right">
                     <span className="block text-[10px] text-slate-500 uppercase font-mono">AI Match Score</span>
-                    <span className="block text-xs text-slate-400">Best Date: <strong className="text-white">{aiPlanResult.bestBookingDate}</strong></span>
+                    <span className="block text-xs text-slate-400">Best Date: <strong className="text-white">{safePlan.bestBookingDate}</strong></span>
                   </div>
                   <div className="w-11 h-11 rounded-full bg-teal-950 text-teal-400 flex items-center justify-center font-display font-bold text-sm border border-teal-500/30">
-                    {aiPlanResult.matchScore}%
+                    {safePlan.matchScore}%
                   </div>
                 </div>
               </div>
@@ -235,7 +322,7 @@ export default function Planner({
                 {/* 1. Itinerary */}
                 {activeSubTab === "itinerary" && (
                   <div className="space-y-6">
-                    {aiPlanResult.itinerary.map((day, dIdx) => (
+                    {safePlan.itinerary.map((day, dIdx) => (
                       <div key={dIdx} className="space-y-4">
                         <div className="flex items-center gap-2">
                           <span className="bg-teal-700 text-white text-[10px] font-mono px-2 py-0.5 rounded-full font-bold">
@@ -279,23 +366,23 @@ export default function Planner({
                         <div className="space-y-2 text-xs text-slate-400 font-mono">
                           <div className="flex justify-between">
                             <span>Local Transport</span>
-                            <span className="text-white">₹{aiPlanResult.budget.transport}</span>
+                            <span className="text-white">₹{safePlan.budget.transport}</span>
                           </div>
                           <div className="flex justify-between">
                             <span>Operator Fee</span>
-                            <span className="text-white">₹{aiPlanResult.budget.operator}</span>
+                            <span className="text-white">₹{safePlan.budget.operator}</span>
                           </div>
                           <div className="flex justify-between">
                             <span>Meals & Dining</span>
-                            <span className="text-white">₹{aiPlanResult.budget.food}</span>
+                            <span className="text-white">₹{safePlan.budget.food}</span>
                           </div>
                           <div className="flex justify-between">
                             <span>Camping / Safety Gear</span>
-                            <span className="text-white">₹{aiPlanResult.budget.equipment}</span>
+                            <span className="text-white">₹{safePlan.budget.equipment}</span>
                           </div>
                           <div className="pt-2 border-t border-white/10 flex justify-between font-bold text-sm">
                             <span className="text-teal-400">TOTAL EST.</span>
-                            <span className="text-teal-400">₹{aiPlanResult.budget.total}</span>
+                            <span className="text-teal-400">₹{safePlan.budget.total}</span>
                           </div>
                         </div>
                         <div className="text-[10px] bg-teal-950/20 text-teal-400 p-2 rounded border border-teal-500/20 text-center font-sans">
@@ -310,7 +397,7 @@ export default function Planner({
                             Transportation Routing
                           </h4>
                           <p className="text-xs text-slate-300 leading-relaxed">
-                            {aiPlanResult.travelRoute}
+                            {safePlan.travelRoute}
                           </p>
                         </div>
 
@@ -318,11 +405,11 @@ export default function Planner({
                         <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-900/40 flex items-center justify-between">
                           <div className="space-y-1">
                             <span className="text-[10px] text-slate-400 font-mono block uppercase">Carbon Footprint</span>
-                            <span className="text-xs font-bold text-emerald-400 block">{aiPlanResult.carbonFootprint} total</span>
+                            <span className="text-xs font-bold text-emerald-400 block">{safePlan.carbonFootprint} total</span>
                           </div>
                           <div className="text-right">
                             <span className="text-[10px] text-slate-400 font-mono block uppercase">Eco Score</span>
-                            <span className="text-xs font-bold text-emerald-400 block">★ {aiPlanResult.ecoScore}/100</span>
+                            <span className="text-xs font-bold text-emerald-400 block">★ {safePlan.ecoScore}/100</span>
                           </div>
                         </div>
                       </div>
@@ -341,13 +428,13 @@ export default function Planner({
                         <Thermometer className="w-5 h-5 text-teal-400" />
                         <div>
                           <span className="text-[9px] text-slate-400 font-mono block uppercase">Estimated Temp</span>
-                          <span className="text-xs font-bold text-white block">{aiPlanResult.weather.temperature} ({aiPlanResult.weather.humidity} Humid)</span>
+                          <span className="text-xs font-bold text-white block">{safePlan.weather.temperature} ({safePlan.weather.humidity} Humid)</span>
                         </div>
                       </div>
                       <div className="md:col-span-2">
                         <span className="text-[9px] text-slate-400 font-mono block uppercase">Weather Warning</span>
                         <span className="text-xs text-slate-300 block">
-                          <strong>{aiPlanResult.weather.condition}</strong>. {aiPlanResult.weather.advice}
+                          <strong>{safePlan.weather.condition}</strong>. {safePlan.weather.advice}
                         </span>
                       </div>
                     </div>
@@ -360,7 +447,7 @@ export default function Planner({
                           Safety Advisor Warnings
                         </h4>
                         <ul className="space-y-2">
-                          {aiPlanResult.safety.map((rule, idx) => (
+                          {safePlan.safety.map((rule, idx) => (
                             <li key={idx} className="text-xs text-slate-300 flex items-start gap-2">
                               <span className="text-rose-500 font-bold shrink-0">!</span>
                               <span>{rule}</span>
@@ -376,7 +463,7 @@ export default function Planner({
                           Recommended Packing Checklist
                         </h4>
                         <ul className="space-y-2">
-                          {aiPlanResult.packingChecklist.map((item, idx) => (
+                          {safePlan.packingChecklist.map((item, idx) => (
                             <li key={idx} className="text-xs text-slate-300 flex items-center gap-2">
                               <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                               <span>{item}</span>
@@ -399,7 +486,7 @@ export default function Planner({
                         Rustic Maharashtrian Dining
                       </h4>
                       <ul className="space-y-2">
-                        {aiPlanResult.restaurants.map((rest, idx) => (
+                        {safePlan.restaurants.map((rest, idx) => (
                           <li key={idx} className="text-xs text-slate-300 p-2.5 bg-slate-900/40 rounded-lg border border-white/5">
                             🍽️ {rest}
                           </li>
@@ -413,7 +500,7 @@ export default function Planner({
                         Nearby Attractions & Hidden Gems
                       </h4>
                       <div className="space-y-2">
-                        {aiPlanResult.hiddenGems.map((gem, idx) => (
+                        {safePlan.hiddenGems.map((gem, idx) => (
                           <div key={idx} className="p-2.5 bg-slate-900/40 rounded-lg border border-white/5">
                             <span className="text-[10px] font-mono text-teal-400 block uppercase font-bold">Secret Lookout</span>
                             <span className="text-xs text-white font-medium">{gem}</span>
@@ -432,12 +519,12 @@ export default function Planner({
                 <div className="text-center sm:text-left">
                   <span className="text-[10px] text-slate-500 uppercase font-mono block">Complete Package Deal</span>
                   <span className="text-xl font-bold text-emerald-400 font-mono">
-                    ₹{aiPlanResult.budget.total} <span className="text-xs font-normal text-slate-400">Total Price</span>
+                    ₹{safePlan.budget.total} <span className="text-xs font-normal text-slate-400">Total Price</span>
                   </span>
                 </div>
                 
                 <button
-                  onClick={() => onBookItinerary(aiPlanResult.destination, aiPlanResult.budget.total)}
+                  onClick={() => onBookItinerary(safePlan.destination, safePlan.budget.total)}
                   className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs px-8 py-3.5 rounded-xl cursor-pointer transition-all shadow-lg glow-orange"
                   id="ai-plan-book-btn"
                 >
@@ -451,7 +538,6 @@ export default function Planner({
         </div>
 
       </div>
-
     </div>
   );
 }

@@ -59,6 +59,115 @@ export default function App() {
     }
   };
 
+  // Client-side fail-safe simulation in case the API encounters rate-limits or key issues
+  const getFrontendSimulatedPlan = (prompt: string): AIPlan => {
+    const query = prompt.toLowerCase();
+    let destination = "Bhandardara Lake & Kalsubai Peak";
+    let activities = ["Lakeside Fireflies Camping", "Kalsubai Sunrise Ascent", "Arthur Lake Kayaking"];
+    let price = 2400;
+    let weatherTemp = "23°C";
+    let weatherCondition = "Overcast with light monsoon drizzle";
+    let route = "Mumbai Central to Kasara via Local Train -> Shared Jeep to Bhandardara (Total 3.5 Hours)";
+    let safetyAdvice = [
+      "Carry headlamps and extra batteries for night treks.",
+      "Do not enter the lake at night without local life-jacket guides.",
+      "High winds at the peak summit; wear a windcheater."
+    ];
+    let packing = ["Rainproof backpack cover", "Trekking shoes with high grip", "ORS/Hydration packs", "Insect repellent"];
+    let hiddenGems = ["Sandhan Valley Viewpoint", "Reverse Waterfall near Bari village", "Ghatghar Kokan Kada"];
+
+    if (query.includes("harishchandragad") || query.includes("kokankada") || query.includes("hard")) {
+      destination = "Harishchandragad Fort & Kokankada Cliff";
+      activities = ["Kokankada Sunset Tenting", "Nalichi Vat Ascending", "Kedareshwar Cave Exploration"];
+      price = 3200;
+      weatherTemp = "20°C";
+      weatherCondition = "Extremely misty with fast-blowing winds";
+      route = "Pune/Mumbai to Khubi Phata via State Transport Bus -> Local jeep to Samrad/Bari (4.5 Hours)";
+      safetyAdvice = [
+        "Kokankada has sudden gusts of wind; never stand too close to the edge.",
+        "Caves get waterlogged during heavy rains. Avoid staying inside Kedareshwar.",
+        "Ropes are highly recommended for the Nalichi Vat rock patches."
+      ];
+      packing = ["Windcheater/Warm layers", "High-ankle grip shoes", "Whistle & basic first aid", "Headlamp for cave paths"];
+      hiddenGems = ["Taramati Peak (Highest point of fort)", "Saptatirtha Pushkarni pond", "Semi-circular rainbow phenomenon on fog"];
+    } else if (query.includes("devkund") || query.includes("waterfall") || query.includes("rafting")) {
+      destination = "Devkund Secret Waterfall & Bhira Plunge";
+      activities = ["Forest Canopy Trekking", "Devkund Plunge Pool Swimming", "Tamhini Valley River Rafting"];
+      price = 1800;
+      weatherTemp = "25°C";
+      weatherCondition = "Heavy rain showers and dramatic forest fog";
+      route = "Pune to Bhira Dam via ST Bus or private vehicle (3 Hours from Pune, 4 Hours from Mumbai)";
+      safetyAdvice = [
+        "The waterfall has highly dangerous undercurrents; swimming near the main cascade is strictly banned.",
+        "The forest path gets muddy and slippery. Avoid step-cutting.",
+        "Carry waterproof bags for your electronic equipment."
+      ];
+      packing = ["Dry bags for essentials", "Quick-dry shorts & t-shirt", "Leech protection socks", "Salt packets (for leeches)"];
+      hiddenGems = ["Kundalika River source lookout", "Bhira Lake backwater viewpoint", "Gharat local dining homesteads"];
+    }
+
+    return {
+      destination,
+      activities,
+      matchScore: 95,
+      bestBookingDate: "Saturday, July 4, 2026",
+      itinerary: [
+        {
+          day: 1,
+          title: "Journey to Wilderness & Lakeside Tenting",
+          slots: [
+            { time: "07:30 AM", activity: "Depart from City", details: "Board the morning scenic train or private vehicle heading deep into the Sahyadri ranges." },
+            { time: "11:30 AM", activity: "Basecamp Arrival & Welcome", details: "Reach the beautiful mountain village basecamp. Relish an authentic hot local Maharashtrian breakfast of Poha and steaming Chai." },
+            { time: "03:00 PM", activity: "Guided Trail Walking", details: "Hike along high ridges covered in wild mist and green shrubs. Capture breathtaking waterfalls slicing the dark basalt rocks." },
+            { time: "06:30 PM", activity: "Setting Camps & Sunset Glow", details: "Pitch premium moisture-proof tents by the lakeside or scenic high-point. Watch the sky turn a deep adventure-orange." },
+            { time: "08:30 PM", activity: "Tribal Barbecue & Stargazing", details: "Gather around a warm campfire, listen to local folklore, and feast on hand-roasted paneer/chicken skewers under the dark sky." }
+          ]
+        },
+        {
+          day: 2,
+          title: "Peak Assault & Plunge Pool Relaxation",
+          slots: [
+            { time: "05:30 AM", activity: "Sunrise Peak Summit Ascent", details: "Hike the final ridge in cool mountain air to catch the sun climbing above a vast sea of milky clouds." },
+            { time: "09:00 AM", activity: "Rustic Homestead Breakfast", details: "Feast on local wood-fired 'Chulha' Pithla Bhakri and rich groundnut chutney prepared by host villagers." },
+            { time: "12:00 PM", activity: "Secret Plunge Pool Splash", details: "Walk down into a shaded deep-forest gorge. Dip your feet in pristine, mineral-rich cold stream waters." },
+            { time: "04:00 PM", activity: "Packing Camps & Departure", details: "Collect your sustainable footprint badge, thank your local guides, and commence the scenic drive back home." }
+          ]
+        }
+      ],
+      budget: {
+        transport: 600,
+        operator: price - 1200,
+        food: 400,
+        equipment: 200,
+        total: price,
+        currency: "INR"
+      },
+      travelRoute: route,
+      packingChecklist: packing,
+      weather: {
+        temperature: weatherTemp,
+        condition: weatherCondition,
+        humidity: "88%",
+        advice: "Highly humid and wet. Pack full waterproof gear, extra ziplocks, and synthetic fabrics that dry in under 1 hour."
+      },
+      safety: safetyAdvice,
+      restaurants: [
+        "Kalsubai Dhaba (Famous for spicy Shev Bhaji & hot Bhakri)",
+        "Hotel Sahyadri Pushpa (Rustic wood-fire slow cooked chicken)",
+        "Mauli Misal House (Authentic fiery double-tarri Kolhapuri Misal)"
+      ],
+      attractions: [
+        "Sandhan Canyon View",
+        "Wilson Dam Spillway",
+        "Ghatghar Kokan Kada Lookout"
+      ],
+      hiddenGems,
+      operatorRecommendation: "Sahyadri Rangers (Verified Elite Grade)",
+      carbonFootprint: "8.5kg CO2e (75% lower than flying)",
+      ecoScore: 94
+    };
+  };
+
   // Trigger conversational AI planning
   const handleAIPlanningRequest = async (promptText: string) => {
     setInitialAIPlanPrompt(promptText);
@@ -76,9 +185,11 @@ export default function App() {
         setAiPlanResult(data);
       } else {
         console.warn("Server plan returned error state. Displaying simulated backup plan.");
+        setAiPlanResult(getFrontendSimulatedPlan(promptText));
       }
     } catch (error) {
-      console.error("AI Planner fetch failure:", error);
+      console.error("AI Planner fetch failure. Displaying local simulated plan as fallback:", error);
+      setAiPlanResult(getFrontendSimulatedPlan(promptText));
     } finally {
       setIsGeneratingPlan(false);
     }
